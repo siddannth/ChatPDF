@@ -1,8 +1,14 @@
+import { db } from "@/lib/db";
+import { chats, messages as _messages } from "@/lib/db/schema";
+import { OpenAIEmbeddings } from "@langchain/openai";
+import { eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
 import { OpenAIStream, StreamingTextResponse } from "ai";
-import { getContext } from "@/lib/context";
+import { getPineconeClient } from "@/lib/pinecone";
 import OpenAI from "openai";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -12,44 +18,67 @@ export async function POST(req: Request) {
   try {
     const { messages, chatId } = await req.json();
 
-    // Get the last message from the user
+    const _chats = await db.select().from(chats).where(eq(chats.id, chatId));
+    if (_chats.length !== 1) {
+      return NextResponse.json({ error: "chat not found" }, { status: 404 });
+    }
+    const fileKey = _chats[0].fileKey;
     const lastMessage = messages[messages.length - 1];
+    const context = await getContext(lastMessage.content, fileKey);
 
-    // Get relevant context from Pinecone
-    const context = await getContext(lastMessage.content, chatId);
-
-    console.log("📄 Using context length:", context.length);
-
-    // Create system message with context
-    const systemMessage = {
-      role: "system" as const,
-      content: `You are a helpful AI assistant. Answer questions based ONLY on the following context from a PDF document.
-
-CONTEXT FROM PDF:
-${context}
-
-INSTRUCTIONS:
-- Answer questions using ONLY the information from the context above
-- If the answer is clearly in the context, provide a detailed response
-- Be specific and quote relevant parts
-- If the information is not in the context, say "I don't see that information in this document"
-- Be conversational and helpful`,
+    const prompt = {
+      role: "system",
+      content: `AI assistant is a brand new, powerful, human-like artificial intelligence.
+      The traits of AI include expert knowledge, helpfulness, cleverness, and articulateness.
+      AI is a well-behaved and well-mannered individual.
+      AI is always friendly, kind, and inspiring, and he is eager to provide vivid and thoughtful responses to the user.
+      AI has the sum of all knowledge in their brain, and is able to accurately answer nearly any question about any topic in conversation.
+      START CONTEXT BLOCK
+      ${context}
+      END OF CONTEXT BLOCK
+      AI assistant will take into account any CONTEXT BLOCK that is provided in a conversation.
+      If the context does not provide the answer to question, the AI assistant will say, "I'm sorry, but I don't know the answer to that question".
+      AI assistant will not apologize for previous responses, but instead will indicated new information was gained.
+      AI assistant will not invent anything that is not drawn directly from the context.
+      `,
     };
 
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
+      messages: [
+        prompt,
+        ...messages.filter((message: any) => message.role === "user"),
+      ],
       stream: true,
-      messages: [systemMessage, ...messages],
-      temperature: 0.0, // Lower temperature for more factual responses
     });
 
-    const stream = OpenAIStream(response);
+    // Fix: Cast the response to any to avoid type errors
+    const stream = OpenAIStream(response as any);
     return new StreamingTextResponse(stream);
   } catch (error) {
     console.error("❌ Chat API Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal Server Error" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
     );
   }
+}
+
+async function getContext(query: string, fileKey: string) {
+  const embeddings = new OpenAIEmbeddings({
+    openAIApiKey: process.env.OPENAI_API_KEY!,
+  });
+  const queryEmbedding = await embeddings.embedQuery(query);
+  
+  const pinecone = await getPineconeClient();
+  const index = pinecone.index(process.env.PINECONE_INDEX_NAME!);
+  
+  const queryResponse = await index.query({
+    vector: queryEmbedding,
+    topK: 5,
+    filter: { fileKey },
+  });
+
+  const relevantDocs = queryResponse.matches.map((match) => match.metadata?.text || "");
+  return relevantDocs.join("\n");
 }
