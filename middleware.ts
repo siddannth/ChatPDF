@@ -1,10 +1,12 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isPublicRoute = createRouteMatcher([
-   "/",
+  "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhook(.*)",
+  "/api/stripe/webhook(.*)",
+  "/chat/(.*)",  // ← Add this to make chat pages accessible
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         success: true,
-        chat_id: chat_id[0].insertedId,
+        chatId: chat_id[0].insertedId,
         message: "PDF embedded and stored successfully",
         documentCount: documents.length,
         vectorCount: vectors.length,

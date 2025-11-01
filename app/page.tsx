@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
-import { ArrowRight, LogIn, Sparkles, FileText } from "lucide-react";
+import { ArrowRight, LogIn, Sparkles, FileText, UserPlus } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { checkSubscription } from "@/lib/subscription";
 import SubscriptionButton from "@/components/SubscriptionButton";
@@ -44,7 +44,24 @@ export default async function Home() {
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <UserButton afterSignOutUrl="/" />
+            {isAuth ? (
+              <UserButton afterSignOutUrl="/" />
+            ) : (
+              <div className="flex gap-2">
+                <Link href="/sign-in">
+                  <Button variant="ghost" className="gap-2">
+                    <LogIn className="w-4 h-4" />
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700">
+                    <UserPlus className="w-4 h-4" />
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </nav>
@@ -92,12 +109,23 @@ export default async function Home() {
             {isAuth ? (
               <FileUpload />
             ) : (
-              <Link href="/sign-in">
-                <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-6 text-lg rounded-xl">
-                  Login to get Started!
-                  <LogIn className="w-5 h-5" />
-                </Button>
-              </Link>
+              <div className="flex flex-col gap-4 items-center">
+                <Link href="/sign-in">
+                  <Button className="gap-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-6 text-lg rounded-xl">
+                    Login to get Started!
+                    <LogIn className="w-5 h-5" />
+                  </Button>
+                </Link>
+                
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                  <span className="text-sm">Don't have an account?</span>
+                  <Link href="/sign-up">
+                    <Button variant="link" className="text-indigo-600 dark:text-indigo-400 font-semibold p-0 h-auto">
+                      Sign Up 
+                    </Button>
+                  </Link>
+                </div>
+              </div>
             )}
           </div>
 

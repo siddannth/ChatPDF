@@ -120,6 +120,7 @@ export async function loadS3IntoPinecone(fileKey: string) {
 }
 
 // Store vectors in Pinecone
+// Store vectors in Pinecone
 export async function storeToPinecone(
   vectors: EmbeddingVector[],
   fileKey: string
@@ -135,12 +136,13 @@ export async function storeToPinecone(
     console.log("📌 Connecting to Pinecone index:", indexName);
     const index = client.index(indexName);
 
-    // Add fileKey to metadata
+    // Add fileKey to existing metadata (don't overwrite!)
     const vectorsWithFileKey = vectors.map((vector) => ({
-      ...vector,
+      id: vector.id,
+      values: vector.values,
       metadata: {
-        ...vector.metadata,
-        fileKey,
+        ...(vector.metadata || {}),  // Keep existing metadata (including text!)
+        fileKey,  // Add fileKey
       },
     }));
 
@@ -162,7 +164,6 @@ export async function storeToPinecone(
     throw error;
   }
 }
-
 // Query Pinecone for similar documents
 export async function queryPinecone(
   queryEmbedding: number[],
