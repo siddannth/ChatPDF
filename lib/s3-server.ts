@@ -4,9 +4,8 @@ import * as fs from "fs";
 import * as path from "path";
 import type { Readable } from "stream";
 
-// If you insist on NEXT_PUBLIC_* vars, keep them; otherwise prefer server-only vars.
 const s3 = new S3Client({
-  region: process.env.NEXT_PUBLIC_S3_REGION || "eu-north-1", // make sure this matches your bucket!
+  region: "eu-north-1", // Hardcoded for now
   credentials: {
     accessKeyId: process.env.NEXT_PUBLIC_S3_ACCESS_KEY_ID!,
     secretAccessKey: process.env.NEXT_PUBLIC_S3_SECRET_ACCESS_KEY!,
@@ -18,7 +17,6 @@ function isNodeReadable(x: any): x is Readable {
 }
 
 async function bodyToBuffer(body: any): Promise<Buffer> {
-  // Node stream
   if (isNodeReadable(body)) {
     const chunks: Buffer[] = [];
     for await (const chunk of body) {
@@ -26,7 +24,6 @@ async function bodyToBuffer(body: any): Promise<Buffer> {
     }
     return Buffer.concat(chunks);
   }
-  // Web stream
   if (body?.getReader) {
     const reader = body.getReader();
     const chunks: Uint8Array[] = [];
@@ -37,7 +34,6 @@ async function bodyToBuffer(body: any): Promise<Buffer> {
     }
     return Buffer.concat(chunks.map((u) => Buffer.from(u)));
   }
-  // Blob/ArrayBuffer
   if (typeof body?.arrayBuffer === "function") {
     const ab = await body.arrayBuffer();
     return Buffer.from(ab);
@@ -47,6 +43,12 @@ async function bodyToBuffer(body: any): Promise<Buffer> {
 
 export async function downloadFromS3(file_key: string): Promise<string | null> {
   try {
+    console.log("🔍 Downloading from S3:");
+    console.log("  - Bucket:", process.env.NEXT_PUBLIC_S3_BUCKET_NAME);
+    console.log("  - Key:", file_key);
+    console.log("  - Region:", "eu-north-1");
+    console.log("  - Access Key ID:", process.env.NEXT_PUBLIC_S3_ACCESS_KEY_ID?.substring(0, 10) + "...");
+
     const { Body } = await s3.send(
       new GetObjectCommand({
         Bucket: process.env.NEXT_PUBLIC_S3_BUCKET_NAME!,
@@ -54,17 +56,25 @@ export async function downloadFromS3(file_key: string): Promise<string | null> {
       })
     );
 
+    console.log("✅ S3 response received, converting to buffer...");
     const buffer = await bodyToBuffer(Body);
+    console.log("✅ Buffer created, size:", buffer.length);
 
-    // Ensure ./tmp exists (Windows-safe)
     const tmpDir = path.join(process.cwd(), "tmp");
     fs.mkdirSync(tmpDir, { recursive: true });
 
     const filePath = path.join(tmpDir, `pdf-${Date.now()}.pdf`);
     fs.writeFileSync(filePath, buffer);
+    console.log("✅ File saved to:", filePath);
+    
     return filePath;
   } catch (error) {
-    console.error("Error downloading from S3:", error);
-    return null;
+    console.error("❌ S3 Download Error:", error);
+    console.error("❌ Error details:", {
+      message: error instanceof Error ? error.message : "Unknown",
+      name: error instanceof Error ? error.name : "Unknown",
+      stack: error instanceof Error ? error.stack : "No stack"
+    });
+    throw new Error(`Failed to download file from S3: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
