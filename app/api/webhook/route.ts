@@ -23,46 +23,55 @@ export async function POST(req: Request) {
     return new NextResponse("Webhook error", { status: 400 });
   }
 
-  // Handle successful subscription creation
+  // new subscription created
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     
-    const subscription = await stripe.subscriptions.retrieve(
-      session.subscription as string
-    );
-
     if (!session?.metadata?.userId) {
       return new NextResponse("User id is required", { status: 400 });
     }
 
+    const subscription = await stripe.subscriptions.retrieve(
+      session.subscription as string
+    );
+    
+    // Get current_period_end from subscription item
+    const periodEnd = subscription.items.data[0]?.current_period_end;
+    
+    if (!periodEnd) {
+      return new NextResponse("no period end", { status: 400 });
+    }
+    
     await db.insert(userSubscriptions).values({
       userId: session.metadata.userId,
       stripeSubscriptionId: subscription.id,
       stripeCustomerId: subscription.customer as string,
       stripePriceId: subscription.items.data[0].price.id,
-      stripeCurrentPeriodEnd: new Date(subscription.items.data[0].current_period_end * 1000),
+      stripeCurrentPeriodEnd: new Date(periodEnd * 1000),
     });
   }
 
-  // Handle subscription updates
+  // subscription payment succeeded (renewal)
   if (event.type === "invoice.payment_succeeded") {
     const invoice = event.data.object as Stripe.Invoice;
     
-    // Get subscription from invoice, not session
-    const subscriptionId = invoice.subscription as string;
+    // Fix: Access subscription using bracket notation or cast
+    const subscriptionId = (invoice as any).subscription as string;
     
     if (subscriptionId) {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-
-      await db
-        .update(userSubscriptions)
-        .set({
-          stripePriceId: subscription.items.data[0].price.id,
-          stripeCurrentPeriodEnd: new Date(
-            subscription.items.data[0].current_period_end * 1000
-          ),
-        })
-        .where(eq(userSubscriptions.stripeSubscriptionId, subscription.id));
+      
+      const periodEnd = subscription.items.data[0]?.current_period_end;
+      
+      if (periodEnd) {
+        await db
+          .update(userSubscriptions)
+          .set({
+            stripePriceId: subscription.items.data[0].price.id,
+            stripeCurrentPeriodEnd: new Date(periodEnd * 1000),
+          })
+          .where(eq(userSubscriptions.stripeSubscriptionId, subscription.id));
+      }
     }
   }
 
