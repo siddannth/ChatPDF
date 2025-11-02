@@ -35,7 +35,6 @@ export async function POST(req: Request) {
       session.subscription as string
     );
     
-    // Get current_period_end from subscription item
     const periodEnd = subscription.items.data[0]?.current_period_end;
     
     if (!periodEnd) {
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
   if (event.type === "invoice.payment_succeeded") {
     const invoice = event.data.object as Stripe.Invoice;
     
-    // Fix: Access subscription using bracket notation or cast
+    
     const subscriptionId = (invoice as any).subscription as string;
     
     if (subscriptionId) {

@@ -66,7 +66,7 @@ export default async function Home() {
         </div>
       </nav>
 
-      {/* Main Content */}
+
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl px-6 z-10">
         <div className="flex flex-col items-center text-center">
           {/* Badge */}
@@ -75,14 +75,14 @@ export default async function Home() {
             <span>AI-Powered PDF Intelligence</span>
           </div>
 
-          {/* Heading */}
+          
           <div className="flex flex-col items-center mb-6">
             <h1 className="text-6xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-gray-900 via-indigo-900 to-gray-900 dark:from-white dark:via-indigo-200 dark:to-white bg-clip-text text-transparent leading-tight">
               Chat with any PDF
             </h1>
           </div>
 
-          {/* Buttons */}
+        
           <div className="flex items-center gap-3 mb-8">
             {isAuth && firstChat && (
               <Link href={`/chat/${firstChat.id}`}>
@@ -104,7 +104,7 @@ export default async function Home() {
             answer questions and understand research with AI
           </p>
 
-          {/* Upload / Login */}
+         
           <div className="w-full max-w-2xl">
             {isAuth ? (
               <FileUpload />
@@ -129,7 +129,7 @@ export default async function Home() {
             )}
           </div>
 
-          {/* Features Pills */}
+         
           {!isAuth && (
             <div className="flex flex-wrap justify-center gap-3 mt-12">
               <div className="px-4 py-2 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 shadow-sm">

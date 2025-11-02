@@ -5,14 +5,12 @@ import md5 from "md5";
 
 export type EmbeddingVector = PineconeRecord;
 
-/**
- * Generate embeddings for documents using OpenAI
- */
+
 export async function generateEmbeddings(
   docs: Document[]
 ): Promise<EmbeddingVector[]> {
   try {
-    console.log("🧠 Generating embeddings for", docs.length, "documents...");
+    console.log(" Generating embeddings for", docs.length, "documents...");
 
     const embeddings = new OpenAIEmbeddings({
   openAIApiKey: process.env.OPENAI_API_KEY!,
@@ -20,12 +18,9 @@ export async function generateEmbeddings(
 
 });
 
-    // Generate embeddings for all documents
     const vectors: EmbeddingVector[] = await Promise.all(
       docs.map(async (doc, index) => {
         const embedding = await embeddings.embedQuery(doc.pageContent);
-        
-        // Create unique ID for each chunk
         const id = md5(doc.pageContent);
 
         return {
@@ -40,22 +35,20 @@ export async function generateEmbeddings(
       })
     );
 
-    console.log(`✅ Created ${vectors.length} embeddings`);
+    console.log(` Created ${vectors.length} embeddings`);
     return vectors;
   } catch (error) {
-    console.error("❌ Error generating embeddings:", error);
+    console.error(" Error generating embeddings:", error);
     throw error;
   }
 }
 
-/**
- * Generate embeddings in batches (for large documents)
- */
+
 export async function generateEmbeddingsBatch(
   docs: Document[],
   batchSize: number = 50
 ): Promise<EmbeddingVector[]> {
-  console.log(`🧠 Generating embeddings in batches of ${batchSize}...`);
+  console.log(` Generating embeddings in batches of ${batchSize}...`);
   
   const allVectors: EmbeddingVector[] = [];
   const totalBatches = Math.ceil(docs.length / batchSize);
@@ -64,19 +57,14 @@ export async function generateEmbeddingsBatch(
     const batch = docs.slice(i, i + batchSize);
     const currentBatch = Math.floor(i / batchSize) + 1;
     
-    console.log(`🧠 Processing batch ${currentBatch}/${totalBatches}`);
-    
+    console.log(` Processing batch ${currentBatch}/${totalBatches}`);
     const vectors = await generateEmbeddings(batch);
     allVectors.push(...vectors);
   }
-
-  console.log(`✅ Generated ${allVectors.length} total embeddings`);
+  console.log(` Generated ${allVectors.length} total embeddings`);
   return allVectors;
 }
 
-/**
- * Generate embedding for a single query string
- */
 export async function generateQueryEmbedding(query: string): Promise<number[]> {
   try {
     const embeddings = new OpenAIEmbeddings({
@@ -87,7 +75,7 @@ export async function generateQueryEmbedding(query: string): Promise<number[]> {
     const embedding = await embeddings.embedQuery(query);
     return embedding;
   } catch (error) {
-    console.error("❌ Error generating query embedding:", error);
+    console.error(" Error generating query embedding:", error);
     throw error;
   }
 }

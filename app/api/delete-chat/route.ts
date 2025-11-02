@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       return new NextResponse("Chat ID is required", { status: 400 });
     }
 
-    // Verify the chat belongs to the user
+   
     const [chat] = await db
       .select()
       .from(chats)
@@ -28,10 +28,9 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Delete messages first (foreign key constraint)
+  
     await db.delete(messages).where(eq(messages.chatId, chatId));
 
-    // Then delete the chat
     await db.delete(chats).where(eq(chats.id, chatId));
 
     return NextResponse.json({ success: true });

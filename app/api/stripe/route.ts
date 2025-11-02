@@ -23,7 +23,7 @@ export async function GET() {
       .from(userSubscriptions)
       .where(eq(userSubscriptions.userId, userId));
     if (_userSubscriptions[0] && _userSubscriptions[0].stripeCustomerId) {
-      // trying to cancel at the billing portal
+  
       const stripeSession = await stripe.billingPortal.sessions.create({
         customer: _userSubscriptions[0].stripeCustomerId,
         return_url,
@@ -31,7 +31,7 @@ export async function GET() {
       return NextResponse.json({ url: stripeSession.url });
     }
 
-    // user's first time trying to subscribe
+   
     const stripeSession = await stripe.checkout.sessions.create({
       success_url: return_url,
       cancel_url: return_url,

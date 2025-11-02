@@ -15,21 +15,19 @@ export async function uploadToS3(
     const file_key =
       "uploads/" + Date.now().toString() + "-" + file.name.replace(/\s+/g, "-");
 
-    // ✅ Always convert to Buffer (works in both client and server)
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
     await s3.putObject({
       Bucket: process.env.NEXT_PUBLIC_S3_BUCKET_NAME!,
       Key: file_key,
-      Body: buffer, // Use buffer, not file directly
+      Body: buffer, 
       ContentType: file.type,
     });
 
-    console.log("✅ S3 upload success:", file_key);
     return { file_key, file_name: file.name };
   } catch (error) {
-    console.error("❌ S3 upload error:", error);
+    console.error("S3 upload error:", error);
     throw error;
   }
 }

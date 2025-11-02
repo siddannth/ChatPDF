@@ -42,8 +42,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Insert into database
-    console.log("💾 Creating chat in database...");
     const chat_id = await db
       .insert(chats)
       .values({
@@ -56,22 +54,9 @@ export async function POST(req: Request) {
         insertedId: chats.id,
       });
 
-    console.log("✅ Chat created with ID:", chat_id[0].insertedId);
-
-    // Load and split PDF
-    console.log("📄 Loading and splitting PDF...");
     const documents = await loadS3IntoPinecone(file_key);
-
-    // Generate embeddings
-    console.log("🧠 Generating embeddings...");
     const vectors = await generateEmbeddings(documents);
-
-    // Store in Pinecone
-    console.log("📌 Storing in Pinecone...");
     await storeToPinecone(vectors, file_key);
-
-    console.log("✅ Successfully processed PDF!");
-
     return NextResponse.json(
       {
         success: true,
@@ -83,7 +68,6 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("❌ Error:", error);
     return NextResponse.json(
       {
         error: "Internal Server Error",

@@ -3,7 +3,7 @@ import { DrizzleChat } from "@/lib/db/schema";
 import Link from "next/link";
 import React from "react";
 import { Button } from "./ui/button";
-import { MessageCircle, PlusCircle, Trash2, Trash, Sparkles } from "lucide-react";
+import { MessageCircle, PlusCircle, Trash2, Trash, Sparkles, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SubscriptionButton from "./SubscriptionButton";
 import axios from "axios";
@@ -18,6 +18,7 @@ type Props = {
 const ChatSideBar = ({ chats, chatId, isPro }: Props) => {
   const [deletingId, setDeletingId] = React.useState<number | null>(null);
   const [deletingAll, setDeletingAll] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.preventDefault();
@@ -58,20 +59,29 @@ const ChatSideBar = ({ chats, chatId, isPro }: Props) => {
     }
   };
 
-  return (
+  const SidebarContent = () => (
     <div className="w-full h-full flex flex-col p-4 bg-white dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-900 dark:to-black border-r border-gray-200 dark:border-gray-800">
       {/* Header with Logo */}
       <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-cyan-600 dark:from-indigo-400 dark:to-cyan-400 bg-clip-text text-transparent">
+              ChatPDF
+            </h2>
           </div>
-          <h2 className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-cyan-600 dark:from-indigo-400 dark:to-cyan-400 bg-clip-text text-transparent">
-            ChatPDF
-          </h2>
+          {/* Close button for mobile */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        <Link href="/">
+        <Link href="/" onClick={() => setIsOpen(false)}>
           <Button className="w-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200">
             <PlusCircle className="mr-2 w-4 h-4" />
             New Chat
@@ -114,6 +124,7 @@ const ChatSideBar = ({ chats, chatId, isPro }: Props) => {
               <Link 
                 href={`/chat/${chat.id}`} 
                 className="flex items-center flex-1 min-w-0"
+                onClick={() => setIsOpen(false)}
               >
                 <div className={cn(
                   "mr-3 p-2 rounded-lg flex-shrink-0",
@@ -154,6 +165,39 @@ const ChatSideBar = ({ chats, chatId, isPro }: Props) => {
         <SubscriptionButton isPro={isPro} />
       </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800"
+      >
+        <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+      </button>
+
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block w-full h-full">
+        <SidebarContent />
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          
+          {/* Sidebar Drawer */}
+          <div className="lg:hidden fixed inset-y-0 left-0 w-[280px] z-50 transform transition-transform duration-300">
+            <SidebarContent />
+          </div>
+        </>
+      )}
+    </>
   );
 };
 
