@@ -30,7 +30,7 @@ const ChatComponent = ({ chatId }: Props) => {
     initialMessages: data || [],
   });
 
-  // Load messages from database when data is fetched
+ 
   React.useEffect(() => {
     if (data && !isLoading) {
       setMessages(data);
@@ -65,7 +65,7 @@ const ChatComponent = ({ chatId }: Props) => {
         </div>
       </div>
 
-      {/* Messages - Scrollable */}
+      
       <div 
         id="message-container"
         className="flex-1 overflow-y-auto"
@@ -73,7 +73,7 @@ const ChatComponent = ({ chatId }: Props) => {
         <MessageList messages={messages} isLoading={isLoading} />
       </div>
 
-      {/* Input Form - Fixed at bottom */}
+    
       <form
         onSubmit={handleSubmit}
         className="flex-shrink-0 px-3 md:px-4 py-3 md:py-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800"

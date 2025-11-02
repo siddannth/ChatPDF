@@ -39,17 +39,19 @@ const ChatPage = async ({ params }: Props) => {
   const isPro = await checkSubscription();
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
-      <div className="hidden lg:block lg:w-[280px] flex-shrink-0 border-r border-gray-200 dark:border-gray-800">
-        <ChatSideBar 
-          chats={_chats} 
-          chatId={parseInt(chatId)} 
-          isPro={isPro}  
-        />
-      </div>
+    <div className="relative flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
+      {/* Sidebar - Always rendered for mobile menu */}
+      <ChatSideBar 
+        chats={_chats} 
+        chatId={parseInt(chatId)} 
+        isPro={isPro}  
+      />
 
-      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
-        <div className="hidden md:flex flex-1 flex-col overflow-hidden min-w-0">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        {/* PDF Viewer - Hidden on mobile, shown on tablet+ */}
+        <div className="hidden md:flex flex-1 flex-col overflow-hidden min-w-0 border-r border-gray-200 dark:border-gray-800">
+          {/* PDF Header */}
           <div className="flex-shrink-0 px-4 lg:px-6 py-3 lg:py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
             <h2 className="text-sm lg:text-base font-semibold text-gray-700 dark:text-gray-200 truncate">
               {currentChat.pdfName}
@@ -57,20 +59,14 @@ const ChatPage = async ({ params }: Props) => {
             <ThemeToggle />
           </div>
           
+          {/* PDF Content */}
           <div className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-950">
             <PDFViewer pdf_url={currentChat.pdfUrl} />
           </div>
         </div>
 
-        <div className="flex-1 lg:w-[480px] lg:flex-shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 flex flex-col">
-          {/* Mobile Header - Only show on mobile */}
-          <div className="md:hidden flex-shrink-0 px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 truncate">
-              {currentChat.pdfName}
-            </h2>
-            <ThemeToggle />
-          </div>
-          
+        {/* Chat Component - Full width on mobile, 40% on desktop */}
+        <div className="flex-1 md:max-w-[500px] lg:max-w-[480px] flex flex-col">
           <ChatComponent chatId={parseInt(chatId)} />
         </div>
       </div>
